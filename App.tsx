@@ -55,32 +55,78 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 // 배경음악 초기화 함수
 const initializeBackgroundMusic = () => {
   try {
-    // 음악 기능 비활성화 (배포 환경에서 파일 로딩 문제)
-    console.log('Background music disabled in production');
-    return;
-    
     if (!lobbyMusic) {
-      lobbyMusic = new Audio('/lobby.mp3');
+      // 여러 경로 시도
+      const lobbyPaths = ['/lobby.mp3', './lobby.mp3', '/public/lobby.mp3'];
+      lobbyMusic = new Audio();
       lobbyMusic.loop = true;
       lobbyMusic.volume = 0.3;
-      lobbyMusic.preload = 'auto';
+      lobbyMusic.preload = 'metadata';
       
-      // 로딩 에러 처리
-      lobbyMusic.addEventListener('error', (e) => {
-        console.warn('Lobby music failed to load from /lobby.mp3, music disabled');
-      });
+      let lobbyLoaded = false;
+      
+      const tryLoadLobby = (pathIndex = 0) => {
+        if (pathIndex >= lobbyPaths.length || lobbyLoaded) return;
+        
+        lobbyMusic.src = lobbyPaths[pathIndex];
+        
+        const onLoad = () => {
+          lobbyLoaded = true;
+          console.log(`Lobby music loaded from: ${lobbyPaths[pathIndex]}`);
+          lobbyMusic.removeEventListener('canplaythrough', onLoad);
+          lobbyMusic.removeEventListener('error', onError);
+        };
+        
+        const onError = () => {
+          console.warn(`Failed to load lobby music from: ${lobbyPaths[pathIndex]}`);
+          lobbyMusic.removeEventListener('canplaythrough', onLoad);
+          lobbyMusic.removeEventListener('error', onError);
+          tryLoadLobby(pathIndex + 1);
+        };
+        
+        lobbyMusic.addEventListener('canplaythrough', onLoad);
+        lobbyMusic.addEventListener('error', onError);
+        lobbyMusic.load();
+      };
+      
+      tryLoadLobby();
     }
     
     if (!playMusic) {
-      playMusic = new Audio('/play.mp3');
+      // 여러 경로 시도
+      const playPaths = ['/play.mp3', './play.mp3', '/public/play.mp3'];
+      playMusic = new Audio();
       playMusic.loop = true;
       playMusic.volume = 0.3;
-      playMusic.preload = 'auto';
+      playMusic.preload = 'metadata';
       
-      // 로딩 에러 처리
-      playMusic.addEventListener('error', (e) => {
-        console.warn('Play music failed to load from /play.mp3, music disabled');
-      });
+      let playLoaded = false;
+      
+      const tryLoadPlay = (pathIndex = 0) => {
+        if (pathIndex >= playPaths.length || playLoaded) return;
+        
+        playMusic.src = playPaths[pathIndex];
+        
+        const onLoad = () => {
+          playLoaded = true;
+          console.log(`Play music loaded from: ${playPaths[pathIndex]}`);
+          playMusic.removeEventListener('canplaythrough', onLoad);
+          playMusic.removeEventListener('error', onError);
+        };
+        
+        const onError = () => {
+          console.warn(`Failed to load play music from: ${playPaths[pathIndex]}`);
+          playMusic.removeEventListener('canplaythrough', onLoad);
+          playMusic.removeEventListener('error', onError);
+          tryLoadPlay(pathIndex + 1);
+        };
+        
+        playMusic.addEventListener('canplaythrough', onLoad);
+        playMusic.addEventListener('error', onError);
+        playMusic.load();
+      };
+      
+      tryLoadPlay();
     }
   } catch (e) {
     console.warn('Could not initialize background music:', e);
@@ -96,15 +142,36 @@ const startBackgroundMusic = (musicType: 'lobby' | 'play') => {
     stopBackgroundMusic();
     
     const musicToPlay = musicType === 'lobby' ? lobbyMusic : playMusic;
-    if (musicToPlay) {
+    if (musicToPlay && musicToPlay.src) {
       currentBackgroundMusic = musicToPlay;
-      const playPromise = musicToPlay.play();
       
-      if (playPromise !== undefined) {
-        playPromise.catch(e => {
-          console.warn(`Could not play ${musicType} music:`, e.message);
-        });
-      }
+      // 음악이 로드되었는지 확인
+      const checkAndPlay = () => {
+        if (musicToPlay.readyState >= 3) { // HAVE_FUTURE_DATA
+          const playPromise = musicToPlay.play();
+          
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log(`Successfully started ${musicType} music`);
+              })
+              .catch(e => {
+                console.warn(`Could not play ${musicType} music:`, e.message);
+                // 자동재생이 차단된 경우 사용자 상호작용 후 재시도
+                if (e.name === 'NotAllowedError') {
+                  console.log('Music autoplay blocked - will play after user interaction');
+                }
+              });
+          }
+        } else {
+          // 아직 로드되지 않았으면 잠시 후 재시도
+          setTimeout(checkAndPlay, 100);
+        }
+      };
+      
+      checkAndPlay();
+    } else {
+      console.warn(`${musicType} music not loaded or no source available`);
     }
   } catch (e) {
     console.warn('Could not start background music:', e);
