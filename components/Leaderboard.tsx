@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTopRecords, GameRecord } from '../lib/supabase-simple.ts';
+import { getTopRecords, clearAllRecords, GameRecord } from '../lib/supabase-simple.ts';
 import { GameMode } from '../types.ts';
 
 interface LeaderboardProps {
@@ -11,6 +11,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
   const [records, setRecords] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminAction, setAdminAction] = useState('');
 
   useEffect(() => {
     loadLeaderboard();
@@ -53,6 +56,28 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
     }
   };
 
+  // 관리자 기능
+  const handleClearRecords = async () => {
+    if (!adminPassword) {
+      setAdminAction('비밀번호를 입력해주세요.');
+      return;
+    }
+
+    try {
+      setAdminAction('기록을 삭제하는 중...');
+      await clearAllRecords(adminPassword);
+      setAdminAction('모든 기록이 삭제되었습니다.');
+      await loadLeaderboard(); // 리더보드 새로고침
+      setTimeout(() => {
+        setShowAdminPanel(false);
+        setAdminPassword('');
+        setAdminAction('');
+      }, 2000);
+    } catch (error: any) {
+      setAdminAction(error.message || '삭제에 실패했습니다.');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
       month: 'short',
@@ -68,16 +93,64 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-cyan-400">🏆 리더보드</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-            title="닫기"
-          >
-            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* 관리자 패널 버튼 */}
+            <button
+              onClick={() => setShowAdminPanel(!showAdminPanel)}
+              className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              title="관리자"
+            >
+              <svg className="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              title="닫기"
+            >
+              <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* 관리자 패널 */}
+        {showAdminPanel && (
+          <div className="mb-6 p-4 bg-red-900 bg-opacity-30 border border-red-500 rounded-lg">
+            <h3 className="text-lg font-bold text-red-400 mb-4">🔒 관리자 패널</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  관리자 비밀번호
+                </label>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="비밀번호 입력"
+                  className="w-full px-3 py-2 bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              
+              <div className="flex space-x-4">
+                <button
+                  onClick={handleClearRecords}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  모든 기록 삭제
+                </button>
+              </div>
+              
+              {adminAction && (
+                <div className="text-sm text-slate-300 mt-2 p-2 bg-slate-700 rounded">
+                  {adminAction}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 게임 모드 탭 */}
         <div className="flex space-x-2 mb-6">

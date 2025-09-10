@@ -388,15 +388,30 @@ export default function App() {
   // 앱 시작 시 음악 자동 시작
   React.useEffect(() => {
     if (isMusicPlaying) {
-      // 사용자 상호작용이 필요한 브라우저 정책으로 인해 첫 클릭 후 시작
-      const startInitialMusic = () => {
-        toggleBackgroundMusic(true, gameState);
-        document.removeEventListener('click', startInitialMusic);
+      // 짧은 지연 후 자동으로 음악 시작 시도
+      const autoStartMusic = () => {
+        setTimeout(() => {
+          toggleBackgroundMusic(true, gameState);
+        }, 500);
       };
-      document.addEventListener('click', startInitialMusic);
+      
+      // 사용자 상호작용이 필요한 경우를 위한 fallback
+      const startOnFirstClick = () => {
+        toggleBackgroundMusic(true, gameState);
+        document.removeEventListener('click', startOnFirstClick);
+        document.removeEventListener('keydown', startOnFirstClick);
+      };
+      
+      // 자동 시작 시도
+      autoStartMusic();
+      
+      // fallback 이벤트 리스너 추가
+      document.addEventListener('click', startOnFirstClick);
+      document.addEventListener('keydown', startOnFirstClick);
       
       return () => {
-        document.removeEventListener('click', startInitialMusic);
+        document.removeEventListener('click', startOnFirstClick);
+        document.removeEventListener('keydown', startOnFirstClick);
       };
     }
   }, []); // 컴포넌트 마운트 시에만 실행

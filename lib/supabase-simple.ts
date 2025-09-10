@@ -54,3 +54,24 @@ export const getTopRecords = async (gameMode?: string, limit: number = 20) => {
 
   return data || []
 }
+
+// 관리자 기능: 모든 게임 기록 삭제
+export const clearAllRecords = async (adminPassword: string) => {
+  const masterPassword = process.env.MASTER_PASSWORD || '940831'
+  
+  if (adminPassword !== masterPassword) {
+    throw new Error('잘못된 관리자 비밀번호입니다.')
+  }
+
+  const { error } = await supabase
+    .from('game_records')
+    .delete()
+    .gte('id', 0) // 모든 레코드 삭제
+
+  if (error) {
+    console.error('Clear records error:', error)
+    throw error
+  }
+
+  return true
+}
