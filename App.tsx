@@ -56,8 +56,8 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 const initializeBackgroundMusic = () => {
   try {
     if (!lobbyMusic) {
-      // 여러 경로 시도 (OGG 우선, MP3 fallback)
-      const lobbyPaths = ['/lobby.ogg', './lobby.ogg', '/public/lobby.ogg', '/lobby.mp3', './lobby.mp3', '/public/lobby.mp3'];
+      // 여러 경로 시도
+      const lobbyPaths = ['/lobby.mp3', './lobby.mp3', '/public/lobby.mp3'];
       lobbyMusic = new Audio();
       lobbyMusic.loop = true;
       lobbyMusic.volume = 0.3;
@@ -95,8 +95,8 @@ const initializeBackgroundMusic = () => {
     }
     
     if (!playMusic) {
-      // 여러 경로 시도 (OGG 우선, MP3 fallback)
-      const playPaths = ['/play.ogg', './play.ogg', '/public/play.ogg', '/play.mp3', './play.mp3', '/public/play.mp3'];
+      // 여러 경로 시도
+      const playPaths = ['/play.mp3', './play.mp3', '/public/play.mp3'];
       playMusic = new Audio();
       playMusic.loop = true;
       playMusic.volume = 0.3;
