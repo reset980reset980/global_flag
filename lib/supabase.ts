@@ -14,11 +14,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: false
-  },
-  global: {
-    headers: {
-      'Access-Control-Allow-Origin': '*'
-    }
   }
 })
 

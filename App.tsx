@@ -56,26 +56,26 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 const initializeBackgroundMusic = () => {
   try {
     if (!lobbyMusic) {
-      lobbyMusic = new Audio('./lobby.mp3');
+      lobbyMusic = new Audio('/lobby.mp3');
       lobbyMusic.loop = true;
       lobbyMusic.volume = 0.3;
       lobbyMusic.preload = 'auto';
       
       // 로딩 에러 처리
       lobbyMusic.addEventListener('error', (e) => {
-        console.warn('Lobby music failed to load:', e);
+        console.warn('Lobby music failed to load from /lobby.mp3, music disabled');
       });
     }
     
     if (!playMusic) {
-      playMusic = new Audio('./play.mp3');
+      playMusic = new Audio('/play.mp3');
       playMusic.loop = true;
       playMusic.volume = 0.3;
       playMusic.preload = 'auto';
       
       // 로딩 에러 처리
       playMusic.addEventListener('error', (e) => {
-        console.warn('Play music failed to load:', e);
+        console.warn('Play music failed to load from /play.mp3, music disabled');
       });
     }
   } catch (e) {
