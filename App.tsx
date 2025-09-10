@@ -55,6 +55,10 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 // 배경음악 초기화 함수
 const initializeBackgroundMusic = () => {
   try {
+    // 음악 기능 비활성화 (배포 환경에서 파일 로딩 문제)
+    console.log('Background music disabled in production');
+    return;
+    
     if (!lobbyMusic) {
       lobbyMusic = new Audio('/lobby.mp3');
       lobbyMusic.loop = true;
