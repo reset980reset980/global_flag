@@ -24,21 +24,42 @@ export const saveGameRecord = async (record: Omit<GameRecord, 'id' | 'created_at
   try {
     console.log('Attempting to save game record:', record)
     
+    // 데이터 검증
+    if (!record.player_name || !record.score !== undefined || !record.total_questions || !record.time_taken !== undefined || !record.game_mode) {
+      console.error('Invalid record data:', record)
+      throw new Error('Invalid game record data')
+    }
+    
     const { data, error } = await supabase
       .from('game_records')
-      .insert([record])
+      .insert([{
+        player_name: record.player_name,
+        score: record.score,
+        total_questions: record.total_questions,
+        time_taken: record.time_taken,
+        game_mode: record.game_mode
+      }])
       .select()
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('Supabase insert error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
       throw error
     }
 
     console.log('Game record saved successfully:', data)
     return data
-  } catch (error) {
-    console.error('Error saving game record:', error)
+  } catch (error: any) {
+    console.error('Error saving game record - Full error:', {
+      message: error?.message,
+      stack: error?.stack,
+      error
+    })
     throw error
   }
 }
@@ -63,14 +84,23 @@ export const getTopRecords = async (gameMode?: string, limit: number = 10) => {
       .limit(limit)
 
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('Supabase fetch error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
       throw error
     }
 
     console.log('Top records fetched successfully:', data?.length || 0, 'records')
-    return data
-  } catch (error) {
-    console.error('Error fetching top records:', error)
+    return data || []
+  } catch (error: any) {
+    console.error('Error fetching top records - Full error:', {
+      message: error?.message,
+      stack: error?.stack,
+      error
+    })
     throw error
   }
 }
