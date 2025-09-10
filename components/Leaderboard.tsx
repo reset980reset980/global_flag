@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTopRecords, clearAllRecords, GameRecord } from '../lib/supabase-simple.ts';
+import { getTopRecords, GameRecord, supabase } from '../lib/supabase-simple.ts';
 import { GameMode } from '../types.ts';
 
 interface LeaderboardProps {
@@ -63,10 +63,42 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
       return;
     }
 
+    // 클라이언트에서 비밀번호 확인
+    const masterPassword = (process.env.MASTER_PASSWORD as string) || '940831';
+    
+    if (adminPassword !== masterPassword) {
+      setAdminAction('잘못된 관리자 비밀번호입니다.');
+      return;
+    }
+
     try {
       setAdminAction('기록을 삭제하는 중...');
-      await clearAllRecords(adminPassword);
-      setAdminAction('모든 기록이 삭제되었습니다.');
+      
+      // 직접 Supabase 호출
+      const { data: records, error: fetchError } = await supabase
+        .from('game_records')
+        .select('id');
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      if (records && records.length > 0) {
+        const ids = records.map(r => r.id);
+        const { error: deleteError } = await supabase
+          .from('game_records')
+          .delete()
+          .in('id', ids);
+
+        if (deleteError) {
+          throw deleteError;
+        }
+        
+        setAdminAction(`${ids.length}개의 기록이 삭제되었습니다.`);
+      } else {
+        setAdminAction('삭제할 기록이 없습니다.');
+      }
+      
       await loadLeaderboard(); // 리더보드 새로고침
       setTimeout(() => {
         setShowAdminPanel(false);
@@ -74,6 +106,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
         setAdminAction('');
       }, 2000);
     } catch (error: any) {
+      console.error('Delete error:', error);
       setAdminAction(error.message || '삭제에 실패했습니다.');
     }
   };

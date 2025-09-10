@@ -57,21 +57,40 @@ export const getTopRecords = async (gameMode?: string, limit: number = 20) => {
 
 // 관리자 기능: 모든 게임 기록 삭제
 export const clearAllRecords = async (adminPassword: string) => {
-  const masterPassword = process.env.MASTER_PASSWORD || '940831'
+  // Vite에서 정의한 환경변수 사용
+  const masterPassword = (process.env.MASTER_PASSWORD as string) || '940831'
   
   if (adminPassword !== masterPassword) {
     throw new Error('잘못된 관리자 비밀번호입니다.')
   }
 
-  const { error } = await supabase
+  // 먼저 모든 레코드를 조회
+  const { data: records, error: fetchError } = await supabase
     .from('game_records')
-    .delete()
-    .gte('id', 0) // 모든 레코드 삭제
+    .select('id')
 
-  if (error) {
-    console.error('Clear records error:', error)
-    throw error
+  if (fetchError) {
+    console.error('Fetch records error:', fetchError)
+    throw fetchError
   }
 
+  if (!records || records.length === 0) {
+    console.log('No records to delete')
+    return true
+  }
+
+  // 모든 ID를 사용하여 삭제
+  const ids = records.map(r => r.id)
+  const { error: deleteError } = await supabase
+    .from('game_records')
+    .delete()
+    .in('id', ids)
+
+  if (deleteError) {
+    console.error('Delete records error:', deleteError)
+    throw deleteError
+  }
+
+  console.log(`Successfully deleted ${ids.length} records`)
   return true
 }
