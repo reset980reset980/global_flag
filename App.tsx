@@ -78,7 +78,9 @@ const initializeBackgroundMusic = () => {
         };
         
         const onError = () => {
-          console.warn(`Failed to load lobby music from: ${lobbyPaths[pathIndex]}`);
+          if (pathIndex === lobbyPaths.length - 1) {
+            console.log('Background music unavailable - running without music');
+          }
           lobbyMusic.removeEventListener('canplaythrough', onLoad);
           lobbyMusic.removeEventListener('error', onError);
           tryLoadLobby(pathIndex + 1);
@@ -115,7 +117,9 @@ const initializeBackgroundMusic = () => {
         };
         
         const onError = () => {
-          console.warn(`Failed to load play music from: ${playPaths[pathIndex]}`);
+          if (pathIndex === playPaths.length - 1) {
+            console.log('Play music unavailable - running without music');
+          }
           playMusic.removeEventListener('canplaythrough', onLoad);
           playMusic.removeEventListener('error', onError);
           tryLoadPlay(pathIndex + 1);

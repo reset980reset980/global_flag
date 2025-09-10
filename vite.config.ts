@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
           '@': path.resolve(__dirname, '.'),
         }
       },
+      publicDir: 'public',
+      assetsInclude: ['**/*.mp3', '**/*.wav', '**/*.ogg'],
       server: {
         port: parseInt(process.env.PORT || '8080'),
         host: '0.0.0.0'
@@ -20,6 +22,10 @@ export default defineConfig(({ mode }) => {
       preview: {
         port: parseInt(process.env.PORT || '8080'),
         host: '0.0.0.0'
+      },
+      build: {
+        copyPublicDir: true,
+        assetsInlineLimit: 0
       }
     };
 });
