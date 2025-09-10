@@ -7,7 +7,8 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.MASTER_PASSWORD': JSON.stringify(env.MASTER_PASSWORD || '940831')
+        'process.env.MASTER_PASSWORD': JSON.stringify(env.MASTER_PASSWORD || env.Master_password || '940831'),
+        'import.meta.env.VITE_MASTER_PASSWORD': JSON.stringify(env.MASTER_PASSWORD || env.Master_password || '940831')
       },
       resolve: {
         alias: {

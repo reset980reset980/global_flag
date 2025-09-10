@@ -63,8 +63,18 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
       return;
     }
 
-    // 클라이언트에서 비밀번호 확인
-    const masterPassword = (process.env.MASTER_PASSWORD as string) || '940831';
+    // 여러 방법으로 환경변수 접근 시도
+    const masterPassword = 
+      (import.meta.env?.VITE_MASTER_PASSWORD as string) ||
+      (process.env.MASTER_PASSWORD as string) || 
+      '940831';
+    
+    console.log('Admin password check:', { 
+      entered: adminPassword, 
+      expected: masterPassword,
+      env1: import.meta.env?.VITE_MASTER_PASSWORD,
+      env2: process.env.MASTER_PASSWORD
+    });
     
     if (adminPassword !== masterPassword) {
       setAdminAction('잘못된 관리자 비밀번호입니다.');
@@ -74,29 +84,58 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
     try {
       setAdminAction('기록을 삭제하는 중...');
       
-      // 직접 Supabase 호출
-      const { data: records, error: fetchError } = await supabase
+      // 더 간단한 삭제 방법 시도
+      const { data, error: deleteError } = await supabase
         .from('game_records')
-        .select('id');
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      if (records && records.length > 0) {
-        const ids = records.map(r => r.id);
-        const { error: deleteError } = await supabase
+        .delete()
+        .neq('id', 0); // id가 0이 아닌 모든 레코드 삭제
+      
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        
+        // 다른 방법 시도: 하나씩 삭제
+        const { data: records, error: fetchError } = await supabase
           .from('game_records')
-          .delete()
-          .in('id', ids);
-
-        if (deleteError) {
-          throw deleteError;
+          .select('id');
+          
+        if (fetchError) {
+          throw fetchError;
         }
         
-        setAdminAction(`${ids.length}개의 기록이 삭제되었습니다.`);
+        if (records && records.length > 0) {
+          let deletedCount = 0;
+          for (const record of records) {
+            const { error } = await supabase
+              .from('game_records')
+              .delete()
+              .eq('id', record.id);
+            
+            if (!error) {
+              deletedCount++;
+            } else {
+              console.error(`Failed to delete record ${record.id}:`, error);
+            }
+          }
+          
+          setAdminAction(`${deletedCount}/${records.length}개의 기록이 삭제되었습니다.`);
+        } else {
+          setAdminAction('삭제할 기록이 없습니다.');
+        }
       } else {
-        setAdminAction('삭제할 기록이 없습니다.');
+        // 삭제 성공 - 실제로 몇 개가 삭제되었는지 확인
+        const { data: remaining, error: checkError } = await supabase
+          .from('game_records')
+          .select('id');
+        
+        if (!checkError && remaining) {
+          if (remaining.length === 0) {
+            setAdminAction('모든 기록이 삭제되었습니다.');
+          } else {
+            setAdminAction(`일부 기록만 삭제됨. ${remaining.length}개 남음.`);
+          }
+        } else {
+          setAdminAction('기록이 삭제되었습니다.');
+        }
       }
       
       await loadLeaderboard(); // 리더보드 새로고침
@@ -104,10 +143,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
         setShowAdminPanel(false);
         setAdminPassword('');
         setAdminAction('');
-      }, 2000);
+      }, 3000);
     } catch (error: any) {
       console.error('Delete error:', error);
-      setAdminAction(error.message || '삭제에 실패했습니다.');
+      setAdminAction(`삭제 실패: ${error.message || '알 수 없는 오류'}`);
     }
   };
 
