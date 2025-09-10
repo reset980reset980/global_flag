@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTopRecords, GameRecord } from '../lib/supabase.ts';
+import { getTopRecords, GameRecord } from '../lib/supabase-simple.ts';
 import { GameMode } from '../types.ts';
 
 interface LeaderboardProps {

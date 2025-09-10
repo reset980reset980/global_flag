@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { saveGameRecord } from '../lib/supabase.ts';
+import { saveGameRecord } from '../lib/supabase-simple.ts';
 import { GameMode } from '../types.ts';
 
 interface ResultModalProps {
