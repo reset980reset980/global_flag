@@ -8,6 +8,7 @@ interface GameProps {
   questionNumber: number;
   totalQuestions: number;
   score: number;
+  onGoHome?: () => void;
 }
 
 const FlagCard: React.FC<{ flagUrl: string }> = ({ flagUrl }) => {
@@ -59,7 +60,7 @@ const OptionButton: React.FC<{
   );
 };
 
-const Game: React.FC<GameProps> = ({ question, onAnswer, questionNumber, totalQuestions, score }) => {
+const Game: React.FC<GameProps> = ({ question, onAnswer, questionNumber, totalQuestions, score, onGoHome }) => {
   const [selection, setSelection] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,7 +78,21 @@ const Game: React.FC<GameProps> = ({ question, onAnswer, questionNumber, totalQu
     <div className="w-full max-w-2xl mx-auto bg-slate-800 p-8 rounded-xl shadow-2xl animate-fade-in">
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2 text-slate-300">
-          <p className="font-bold">Question {questionNumber} / {totalQuestions}</p>
+          <div className="flex items-center space-x-4">
+            <p className="font-bold">Question {questionNumber} / {totalQuestions}</p>
+            {onGoHome && (
+              <button
+                onClick={onGoHome}
+                className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-slate-300 hover:text-white rounded-lg text-sm font-medium transition-colors flex items-center space-x-1"
+                title="홈으로 가기"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
+                <span>홈</span>
+              </button>
+            )}
+          </div>
           <p className="font-bold text-cyan-400">Score: {score}</p>
         </div>
         <div className="w-full bg-slate-700 rounded-full h-2.5">

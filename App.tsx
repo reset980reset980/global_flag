@@ -505,7 +505,6 @@ export default function App() {
         {gameState === 'mode-selection' && (
           <GameModeSelector
             onSelectMode={handleSelectMode}
-            onShowLeaderboard={handleShowLeaderboard}
           />
         )}
         {gameState === 'continent-selection' && (
@@ -524,6 +523,7 @@ export default function App() {
             questionNumber={currentQuestionIndex + 1}
             totalQuestions={questions.length}
             score={score}
+            onGoHome={handleRestart}
           />
         )}
         {gameState === 'finished' && gameMode && (
